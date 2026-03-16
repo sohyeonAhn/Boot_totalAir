@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+    {key} 는 EgovMap에 put()한 키 이름과 일치해야 함
+-->
+<mapper namespace="egovframework.air.dao.AirDao">
+
+    <!--
+        측정소 Upsert
+        - EgovMap 키: stationName, addr, year, mangName, item, dmX, dmY, tm
+    -->
+    <insert id="upsertStation" parameterType="map">
+        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y, tm)
+        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}, #{dmY}, #{tm})
+        ON CONFLICT (station_name) DO UPDATE SET
+            addr         = EXCLUDED.addr,
+            install_year = EXCLUDED.install_year,
+            mang_name    = EXCLUDED.mang_name,
+            item         = EXCLUDED.item,
+            dm_x         = EXCLUDED.dm_x,
+            dm_y         = EXCLUDED.dm_y,
+            tm           = EXCLUDED.tm,
+            updated_at   = CURRENT_TIMESTAMP
+    </insert>
+
+    <!--
+        측정소 목록 조회
+    -->
+    <select id="selectStationList" parameterType="map" resultType="egovMap">
+        SELECT station_id, station_name, addr,
+               install_year AS year,
+               mang_name, item, dm_x, dm_y, tm,
+               created_at, updated_at
+        FROM sub_station_air
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (
+                    station_name LIKE '%' || #{keyword} || '%'
+                 OR addr         LIKE '%' || #{keyword} || '%'
+                 OR mang_name    LIKE '%' || #{keyword} || '%'
+                )
+            </if>
+        </where>
+        ORDER BY station_name
+    </select>
+
+
+</mapper>
