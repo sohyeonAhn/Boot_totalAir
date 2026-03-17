@@ -15,6 +15,15 @@ public interface AirDao {
     // 측정소 Upsert (station_name 충돌 시 UPDATE)
     void upsertStation(EgovMap map);
 
+    // 측정소 등록
+    void insertStation(EgovMap map);
+
+    // 측정소 수정
+    int updateStation(EgovMap map);
+
+    // 측정소 삭제
+    int deleteStation(EgovMap map);
+
     // 측정소 목록 조회 (keyword 부분 일치 검색: station_name / addr / mang_name)
     List<EgovMap> selectStationList(EgovMap searchMap);
 }

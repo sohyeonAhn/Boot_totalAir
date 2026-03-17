@@ -61,5 +61,29 @@ public class AirServiceImpl implements AirService {
         return airDao.selectStationList(searchMap);
     }
 
+    // 측정소 등록
+    @Override
+    public void insertStation(EgovMap map) {
+        airDao.insertStation(map);
+    }
+
+    // 측정소 수정
+    @Override
+    public void updateStation(EgovMap map) {
+        int affected = airDao.updateStation(map);
+        if (affected == 0) {
+            throw new IllegalArgumentException("수정할 측정소가 없습니다. stationId=" + map.get("stationId"));
+        }
+    }
+
+    // 측정소 삭제
+    @Override
+    public void deleteStation(EgovMap map) {
+        int affected = airDao.deleteStation(map);
+        if (affected == 0) {
+            throw new IllegalArgumentException("삭제할 측정소가 없습니다. stationId=" + map.get("stationId"));
+        }
+    }
+
 
 }

@@ -11,7 +11,7 @@ import java.util.Map;
 
 
 @RestController
-@RequiredArgsConstructor
+@RequiredArgsConstructor 
 public class AirController {
 
     private final AirService airService;
@@ -24,14 +24,40 @@ public class AirController {
     }
 
     // 측정소 목록
-    // @GetMapping("/api/stations") // React 용
-    @GetMapping("/api/air/stations") // PostMan 용
+    @PostMapping("/api/air/stations")
     public ResponseEntity<List<EgovMap>> getStations(
-            @RequestParam(required = false) String keyword) {
+            @RequestBody(required = false) EgovMap searchMap) {
 
-        EgovMap searchMap = new EgovMap();
-        searchMap.put("keyword", keyword);
+        if (searchMap == null) searchMap = new EgovMap();
         return ResponseEntity.ok(airService.getStationList(searchMap));
+    }
+
+    // 측정소 등록
+    @PostMapping("/api/air/stations/insert")
+    public ResponseEntity<Map<String, Object>> insertStation(
+            @RequestBody EgovMap map) {
+        airService.insertStation(map);
+        return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
+    // 측정소 수정
+    @PutMapping("/api/air/stations/{stationId}")
+    public ResponseEntity<Map<String, Object>> updateStation(
+            @PathVariable Long stationId,
+            @RequestBody EgovMap map) {
+        map.put("stationId", stationId);
+        airService.updateStation(map);
+        return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
+    // 측정소 삭제
+    @DeleteMapping("/api/air/stations/{stationId}")
+    public ResponseEntity<Map<String, Object>> deleteStation(
+            @PathVariable Long stationId) {
+        EgovMap param = new EgovMap();
+        param.put("stationId", stationId);
+        airService.deleteStation(param);
+        return ResponseEntity.ok(Map.of("result", "success"));
     }
 
 

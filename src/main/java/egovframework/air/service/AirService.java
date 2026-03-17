@@ -15,4 +15,13 @@ public interface AirService {
     // DB에서 측정소 목록 조회
     List<EgovMap> getStationList(EgovMap searchMap);
 
+    // 측정소 등록
+    void insertStation(EgovMap map);
+
+    // 측정소 수정
+    void updateStation(EgovMap map);
+
+    // 측정소 삭제
+    void deleteStation(EgovMap map);
+
 }
