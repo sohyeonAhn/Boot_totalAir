@@ -81,4 +81,107 @@
     </select>
 
 
+    <!--
+        저장된 측정소명 전체 목록 조회
+    -->
+    <select id="selectAllStationNames" resultType="string">
+        SELECT station_name FROM sub_station_air ORDER BY station_name
+    </select>
+
+    <!--
+        특정 기간에 이미 데이터가 저장된 측정소명 목록 조회
+        - EgovMap 키: startTime(LocalDateTime), endTime(LocalDateTime)
+    -->
+    <select id="selectCollectedStationNames" parameterType="map" resultType="string">
+        SELECT DISTINCT s.station_name
+        FROM sub_history_air h
+        JOIN sub_station_air s ON s.station_id = h.station_id
+        WHERE h.data_time BETWEEN #{startTime} AND #{endTime}
+    </select>
+
+    <!--
+        대기오염 이력 목록 조회
+        - EgovMap 키(선택): stationId, startDate, endDate
+    -->
+    <select id="selectHistoryList" parameterType="map" resultType="egovMap">
+        SELECT h.station_id, s.station_name,
+               h.data_time, h.so2_value, h.co_value, h.o3_value, h.no2_value,
+               h.pm10_value, h.pm25_value, h.khai_value
+        FROM sub_history_air h
+        JOIN sub_station_air s ON s.station_id = h.station_id
+        <where>
+            <if test="stationId != null">
+                AND h.station_id = #{stationId}
+            </if>
+            <if test="startDate != null and startDate != ''">
+                AND h.data_time &gt;= #{startDate}::timestamp
+            </if>
+            <if test="endDate != null and endDate != ''">
+                AND h.data_time &lt;= #{endDate}::timestamp
+            </if>
+        </where>
+        ORDER BY h.data_time DESC
+    </select>
+
+    <!--
+        대기오염 이력 등록
+        - EgovMap 키: stationId, dataTime, so2Value, coValue, o3Value, no2Value, pm10Value, pm25Value, khaiValue
+    -->
+    <insert id="insertHistory" parameterType="map">
+        INSERT INTO sub_history_air (station_id, data_time, so2_value, co_value, o3_value, no2_value, pm10_value, pm25_value, khai_value)
+        VALUES (#{stationId}, #{dataTime}::timestamp, #{so2Value}, #{coValue}, #{o3Value}, #{no2Value}, #{pm10Value}, #{pm25Value}, #{khaiValue})
+    </insert>
+
+    <!--
+        대기오염 이력 수정
+        - EgovMap 키: stationId, dataTime, so2Value, coValue, o3Value, no2Value, pm10Value, pm25Value, khaiValue
+    -->
+    <update id="updateHistory" parameterType="map">
+        UPDATE sub_history_air
+        SET so2_value  = #{so2Value},
+            co_value   = #{coValue},
+            o3_value   = #{o3Value},
+            no2_value  = #{no2Value},
+            pm10_value = #{pm10Value},
+            pm25_value = #{pm25Value},
+            khai_value = #{khaiValue}
+        WHERE station_id = #{stationId}
+          AND data_time  = #{dataTime}::timestamp
+    </update>
+
+    <!--
+        대기오염 이력 삭제
+        - EgovMap 키: stationId, dataTime
+    -->
+    <delete id="deleteHistory" parameterType="map">
+        DELETE FROM sub_history_air
+        WHERE station_id = #{stationId}
+          AND data_time  = #{dataTime}::timestamp
+    </delete>
+
+    <!--
+        실시간 측정정보 Upsert
+        - EgovMap 키: stationName, dataTime(LocalDateTime), so2Value, coValue, o3Value, no2Value,
+                      pm10Value, pm25Value, khaiValue
+        - station_name → station_id 변환은 sub_station_air JOIN으로 처리
+    -->
+    <insert id="upsertHistory" parameterType="map">
+        INSERT INTO sub_history_air (
+            station_id, data_time,
+            so2_value, co_value, o3_value, no2_value, pm10_value, pm25_value, khai_value
+        )
+        SELECT s.station_id, #{dataTime},
+               #{so2Value}, #{coValue}, #{o3Value}, #{no2Value}, #{pm10Value}, #{pm25Value}, #{khaiValue}
+        FROM sub_station_air s
+        WHERE s.station_name = #{stationName}
+        ON CONFLICT (station_id, data_time) DO UPDATE SET
+            so2_value  = EXCLUDED.so2_value,
+            co_value   = EXCLUDED.co_value,
+            o3_value   = EXCLUDED.o3_value,
+            no2_value  = EXCLUDED.no2_value,
+            pm10_value = EXCLUDED.pm10_value,
+            pm25_value = EXCLUDED.pm25_value,
+            khai_value = EXCLUDED.khai_value
+    </insert>
+
 </mapper>

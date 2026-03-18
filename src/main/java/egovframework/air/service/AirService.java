@@ -9,19 +9,20 @@ import java.util.List;
  */
 public interface AirService {
 
-    // 전체 측정소를 API에서 수집하여 DB에 저장, 저장된 수 반환
-    int collectAndSaveAllStations();
+    int collectAndSaveAllStations();    // 전체 측정소를 API 수집 후 DB에 저장, 저장된 수 반환
 
-    // DB에서 측정소 목록 조회
-    List<EgovMap> getStationList(EgovMap searchMap);
+    List<EgovMap> getStationList(EgovMap searchMap);    // 측정소 목록 조회
 
-    // 측정소 등록
-    void insertStation(EgovMap map);
+    void insertStation(EgovMap map);    // 측정소 등록
+    void updateStation(EgovMap map);    // 측정소 수정
+    void deleteStation(EgovMap map);    // 측정소 삭제
 
-    // 측정소 수정
-    void updateStation(EgovMap map);
+    List<EgovMap> getHistoryList(EgovMap searchMap);    // 대기오염 이력 목록 조회
 
-    // 측정소 삭제
-    void deleteStation(EgovMap map);
+    void insertHistory(EgovMap map);    // 대기오염 이력 등록
+    void updateHistory(EgovMap map);    // 대기오염 이력 수정
+    void deleteHistory(EgovMap map);    // 대기오염 이력 삭제
 
+    int collectAndSaveHistory(String startDate, String endDate);    // DB의 전체 측정소에 대해
+                                                                    // startDate ~ endDate 의 측정정보를 수집하여 저장
 }
