@@ -91,6 +91,37 @@ public class AirServiceImpl implements AirService {
     }
 
 
+    // 대기오염 이력 목록 조회
+    @Override
+    @Transactional(readOnly = true)
+    public List<EgovMap> getHistoryList(EgovMap searchMap) {
+        return airDao.selectHistoryList(searchMap);
+    }
+
+    // 대기오염 이력 등록
+    @Override
+    public void insertHistory(EgovMap map) {
+        airDao.insertHistory(map);
+    }
+
+    // 대기오염 이력 수정
+    @Override
+    public void updateHistory(EgovMap map) {
+        int affected = airDao.updateHistory(map);
+        if (affected == 0) {
+            throw new IllegalArgumentException("수정할 이력이 없습니다. stationId=" + map.get("stationId") + ", dataTime=" + map.get("dataTime"));
+        }
+    }
+
+    // 대기오염 이력 삭제
+    @Override
+    public void deleteHistory(EgovMap map) {
+        int affected = airDao.deleteHistory(map);
+        if (affected == 0) {
+            throw new IllegalArgumentException("삭제할 이력이 없습니다. stationId=" + map.get("stationId") + ", dataTime=" + map.get("dataTime"));
+        }
+    }
+
     // DB의 전체 측정소에 대해 startDate ~ endDate 범위의 측정정보를 API에서 수집하여 sub_history_air에 저장
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)

@@ -17,6 +17,11 @@ public class AirController {
 
     private final AirService airService;
 
+
+    // //////////////////////////////////////////////
+    // 측정소 이력
+    // //////////////////////////////////////////////
+
     // AirKorea API 전체 측정소 수집 후 DB 저장
     @PostMapping("/api/air/stations/collect")
     public ResponseEntity<Map<String, Object>> collectAllStations() {
@@ -42,7 +47,7 @@ public class AirController {
     }
 
     // 측정소 수정
-    @PutMapping("/api/air/stations/{stationId}")
+    @PostMapping("/api/air/stations/update/{stationId}")
     public ResponseEntity<Map<String, Object>> updateStation(
             @PathVariable Long stationId,
             @RequestBody EgovMap map) {
@@ -52,7 +57,7 @@ public class AirController {
     }
 
     // 측정소 삭제
-    @DeleteMapping("/api/air/stations/{stationId}")
+    @PostMapping("/api/air/stations/delete/{stationId}")
     public ResponseEntity<Map<String, Object>> deleteStation(
             @PathVariable Long stationId) {
         EgovMap param = new EgovMap();
@@ -61,8 +66,44 @@ public class AirController {
         return ResponseEntity.ok(Map.of("result", "success"));
     }
 
+
+    // //////////////////////////////////////////////
+    // 대기오렴 이력
+    // //////////////////////////////////////////////
+
+    // 대기오염 이력 목록 조회 (stationId, startDate, endDate 선택)
+    @PostMapping("/api/air/history")
+    public ResponseEntity<List<EgovMap>> getHistoryList(
+            @RequestBody(required = false) EgovMap searchMap) {
+        if (searchMap == null) searchMap = new EgovMap();
+        return ResponseEntity.ok(airService.getHistoryList(searchMap));
+    }
+
+    // 대기오염 이력 등록
+    @PostMapping("/api/air/history/insert")
+    public ResponseEntity<Map<String, Object>> insertHistory(
+            @RequestBody EgovMap map) {
+        airService.insertHistory(map);
+        return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
+    // 대기오염 이력 수정 (stationId + dataTime 으로 대상 지정)
+    @PostMapping("/api/air/history/update")
+    public ResponseEntity<Map<String, Object>> updateHistory(
+            @RequestBody EgovMap map) {
+        airService.updateHistory(map);
+        return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
+    // 대기오염 이력 삭제 (historyId + dataTime 둘 다 일치해야 삭제)
+    @PostMapping("/api/air/history/delete")
+    public ResponseEntity<Map<String, Object>> deleteHistory(
+            @RequestBody EgovMap map) {
+        airService.deleteHistory(map);
+        return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
     // 측정소별 실시간 측정정보를 지정 기간 동안 수집하여 sub_history_air에 저장
-    // Body: { "startDate": "2026-03-01", "endDate": "2026-03-03" }
     @PostMapping("/api/air/history/collect")
     public ResponseEntity<Map<String, Object>> collectHistory(
             @RequestBody(required = false) Map<String, String> body) {

@@ -31,9 +31,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AirKoreaClient {
 
-    private final RestTemplate       restTemplate; // HTTP 통신 담당 (AppConfig에서 Bean 등록)
-    private final ObjectMapper       objectMapper;  // JSON 파싱 담당 (AppConfig에서 Bean 등록)
-    private final AirKoreaProperties props;         // airkorea.* 설정값 (serviceKey, baseUrl)
+    private final RestTemplate       restTemplate;
+    private final ObjectMapper       objectMapper;
+    private final AirKoreaProperties props;
 
 
     // 전체 측정소 목록을 페이지 단위로 조회
