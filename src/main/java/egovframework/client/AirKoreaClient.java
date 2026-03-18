@@ -15,12 +15,14 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * AirKorea 오픈API 호출 클라이언트
- * 
+ *
  * [처리 흐름]
  *   getStations() → executeGet() → parseStations() → EgovMap 리스트 반환
  */
@@ -50,6 +52,28 @@ public class AirKoreaClient {
 
         // 데이터 수신 여부 확인용 로그 (페이지별 수신 건수 체크)
         log.info("[AirKorea] pageNo={}, count={}", pageNo, rows.size());
+        return rows;
+    }
+
+
+    // 측정소별 실시간 측정정보 조회 (dataTerm: DAILY / MONTH / 3MONTH)
+    public List<EgovMap> getMeasurements(String stationName, String dataTerm, int pageNo, int numOfRows) {
+        URI uri = UriComponentsBuilder
+                .fromHttpUrl(props.getArpltn().getBaseUrl() + "/getMsrstnAcctoRltmMesureDnsty")
+                .queryParam("serviceKey", props.getServiceKey())
+                .queryParam("returnType", "json")
+                .queryParam("numOfRows", numOfRows)
+                .queryParam("pageNo", pageNo)
+                .queryParam("stationName", stationName)
+                .queryParam("dataTerm", dataTerm)
+                .queryParam("ver", "1.3")
+                .build()
+                .encode(StandardCharsets.UTF_8)
+                .toUri();
+
+        String json = executeGet(uri);
+        List<EgovMap> rows = parseMeasurements(json);
+        log.info("[AirKorea] getMeasurements station={}, pageNo={}, count={}", stationName, pageNo, rows.size());
         return rows;
     }
 
@@ -103,6 +127,48 @@ public class AirKoreaClient {
             return result;
         } catch (Exception e) {
             throw new IllegalStateException("측정소 응답 파싱 실패", e);
+        }
+    }
+
+
+    // 측정정보 API 응답 JSON을 파싱하여 EgovMap 리스트로 변환
+    private List<EgovMap> parseMeasurements(String json) {
+
+        /** [JSON 구조]
+         *   response > body > items > [ { stationName, dataTime, so2Value, coValue, o3Value,
+         *                                  no2Value, pm10Value, pm25Value, khaiValue, khaiGrade,
+         *                                  so2Grade, coGrade, o3Grade, no2Grade, pm10Grade, pm25Grade }, ... ] */
+
+        try {
+            List<EgovMap> result = new ArrayList<>();
+
+            JsonNode items = objectMapper.readTree(json)
+                    .path("response").path("body").path("items");
+
+            if (!items.isArray()) return result;
+
+            for (JsonNode item : items) {
+                String dataTimeStr = text(item, "dataTime");
+                if (!StringUtils.hasText(dataTimeStr)) continue;
+
+                LocalDateTime dataTime = DateTimeUtils.parseDateTime(dataTimeStr);
+                if (dataTime == null) continue;
+
+                EgovMap map = new EgovMap();
+                map.put("stationName", text(item, "stationName"));
+                map.put("dataTime",    dataTime);
+                map.put("so2Value",    DateTimeUtils.parseDoubleOrNull(text(item, "so2Value")));
+                map.put("coValue",     DateTimeUtils.parseDoubleOrNull(text(item, "coValue")));
+                map.put("o3Value",     DateTimeUtils.parseDoubleOrNull(text(item, "o3Value")));
+                map.put("no2Value",    DateTimeUtils.parseDoubleOrNull(text(item, "no2Value")));
+                map.put("pm10Value",   DateTimeUtils.parseDoubleOrNull(text(item, "pm10Value")));
+                map.put("pm25Value",   DateTimeUtils.parseDoubleOrNull(text(item, "pm25Value")));
+                map.put("khaiValue",   DateTimeUtils.parseDoubleOrNull(text(item, "khaiValue")));
+                result.add(map);
+            }
+            return result;
+        } catch (Exception e) {
+            throw new IllegalStateException("측정정보 응답 파싱 실패", e);
         }
     }
 

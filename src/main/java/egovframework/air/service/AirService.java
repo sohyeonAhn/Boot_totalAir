@@ -24,4 +24,7 @@ public interface AirService {
     // 측정소 삭제
     void deleteStation(EgovMap map);
 
+    // DB의 전체 측정소에 대해 startDate ~ endDate 범위의 측정정보를 API에서 수집하여 sub_history_air에 저장
+    int collectAndSaveHistory(String startDate, String endDate);
+
 }

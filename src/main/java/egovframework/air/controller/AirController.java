@@ -8,10 +8,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 
 @RestController
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 public class AirController {
 
     private final AirService airService;
@@ -58,6 +59,17 @@ public class AirController {
         param.put("stationId", stationId);
         airService.deleteStation(param);
         return ResponseEntity.ok(Map.of("result", "success"));
+    }
+
+    // 측정소별 실시간 측정정보를 지정 기간 동안 수집하여 sub_history_air에 저장
+    // Body: { "startDate": "2026-03-01", "endDate": "2026-03-03" }
+    @PostMapping("/api/air/history/collect")
+    public ResponseEntity<Map<String, Object>> collectHistory(
+            @RequestBody(required = false) Map<String, String> body) {
+        String startDate = (body != null && body.containsKey("startDate")) ? body.get("startDate") : "2026-03-01";
+        String endDate   = (body != null && body.containsKey("endDate"))   ? body.get("endDate")   : "2026-03-03";
+        int saved = airService.collectAndSaveHistory(startDate, endDate);
+        return ResponseEntity.ok(Map.of("savedCount", saved, "startDate", startDate, "endDate", endDate));
     }
 
 

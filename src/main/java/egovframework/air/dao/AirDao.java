@@ -26,4 +26,13 @@ public interface AirDao {
 
     // 측정소 목록 조회 (keyword 부분 일치 검색: station_name / addr / mang_name)
     List<EgovMap> selectStationList(EgovMap searchMap);
+
+    // 저장된 측정소명 전체 목록 조회
+    List<String> selectAllStationNames();
+
+    // 특정 기간에 이미 데이터가 저장된 측정소명 목록 조회
+    List<String> selectCollectedStationNames(EgovMap param);
+
+    // 실시간 측정정보 Upsert (station_name + data_time 충돌 시 UPDATE)
+    void upsertHistory(EgovMap map);
 }
