@@ -58,6 +58,9 @@ public class AirServiceImpl implements AirService {
         return total;
     }
 
+    // //////////////////////////////////////////////
+    // 측정소 이력
+    // //////////////////////////////////////////////
 
     // DB에 저장된 측정소 목록 조회 (keyword 부분 일치)
     @Override
@@ -90,6 +93,10 @@ public class AirServiceImpl implements AirService {
         }
     }
 
+
+    // //////////////////////////////////////////////
+    // 대기오렴 이력
+    // //////////////////////////////////////////////
 
     // 대기오염 이력 목록 조회
     @Override

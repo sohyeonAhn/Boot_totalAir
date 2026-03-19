@@ -9,11 +9,11 @@
 
     <!--
         측정소 Upsert
-        - EgovMap 키: stationName, addr, year, mangName, item, dmX, dmY, tm
+        - EgovMap 키: stationName, addr, year, mangName, item, dmX, dmY
     -->
     <insert id="upsertStation" parameterType="map">
-        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y, tm)
-        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}, #{dmY}, #{tm})
+        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y)
+        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}, #{dmY})
         ON CONFLICT (station_name) DO UPDATE SET
             addr         = EXCLUDED.addr,
             install_year = EXCLUDED.install_year,
@@ -21,7 +21,6 @@
             item         = EXCLUDED.item,
             dm_x         = EXCLUDED.dm_x,
             dm_y         = EXCLUDED.dm_y,
-            tm           = EXCLUDED.tm,
             updated_at   = CURRENT_TIMESTAMP
     </insert>
 
@@ -29,8 +28,8 @@
         측정소 등록
     -->
     <insert id="insertStation" parameterType="map">
-        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y, tm)
-        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}::numeric, #{dmY}::numeric, #{tm})
+        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y)
+        VALUES (#{stationName}, #{addr}, NULLIF(#{year}, '')::integer, #{mangName}, #{item}, NULLIF(#{dmX}, '')::numeric, NULLIF(#{dmY}, '')::numeric)
     </insert>
 
     <!--
@@ -40,14 +39,13 @@
         UPDATE sub_station_air
         SET station_name = #{stationName},
             addr         = #{addr},
-            install_year = #{year},
+            install_year = NULLIF(#{year}, '')::integer,
             mang_name    = #{mangName},
             item         = #{item},
-            dm_x         = #{dmX}::numeric,
-            dm_y         = #{dmY}::numeric,
-            tm           = #{tm},
+            dm_x         = NULLIF(#{dmX}, '')::numeric,
+            dm_y         = NULLIF(#{dmY}, '')::numeric,
             updated_at   = CURRENT_TIMESTAMP
-        WHERE station_id = #{stationId}
+        WHERE station_id = #{stationId}::bigint
     </update>
 
     <!--
@@ -56,7 +54,7 @@
     -->
     <delete id="deleteStation" parameterType="map">
         DELETE FROM sub_station_air
-        WHERE station_id = #{stationId}
+        WHERE station_id = #{stationId}::bigint
     </delete>
 
     <!--

@@ -49,7 +49,7 @@ public class AirController {
     // 측정소 수정
     @PostMapping("/api/air/stations/update/{stationId}")
     public ResponseEntity<Map<String, Object>> updateStation(
-            @PathVariable Long stationId,
+            @PathVariable String stationId,
             @RequestBody EgovMap map) {
         map.put("stationId", stationId);
         airService.updateStation(map);
@@ -59,7 +59,7 @@ public class AirController {
     // 측정소 삭제
     @PostMapping("/api/air/stations/delete/{stationId}")
     public ResponseEntity<Map<String, Object>> deleteStation(
-            @PathVariable Long stationId) {
+            @PathVariable String stationId) {
         EgovMap param = new EgovMap();
         param.put("stationId", stationId);
         airService.deleteStation(param);
