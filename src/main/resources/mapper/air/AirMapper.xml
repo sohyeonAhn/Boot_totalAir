@@ -103,6 +103,71 @@
     </select>
 
     <!--
+        대기오염 이력 집계 조회 (시간별 / 일별 / 월별 / 요일별 / 계절별 평균)
+        - EgovMap 키: stationId, groupBy ("hour" | "day" | "month" | "weekday" | "season")
+    -->
+    <select id="selectHistoryAggregate" parameterType="map" resultType="egovMap">
+        SELECT
+            group_key,
+            group_label,
+            COUNT(*)                               AS data_count,
+            ROUND(AVG(pm10_value)::numeric, 1)     AS pm10_avg,
+            ROUND(AVG(pm25_value)::numeric, 1)     AS pm25_avg,
+            ROUND(AVG(o3_value)::numeric,  4)      AS o3_avg,
+            ROUND(AVG(no2_value)::numeric, 4)      AS no2_avg,
+            ROUND(AVG(co_value)::numeric,  2)      AS co_avg,
+            ROUND(AVG(so2_value)::numeric, 4)      AS so2_avg
+        FROM (
+            SELECT
+                pm10_value, pm25_value, o3_value, no2_value, co_value, so2_value,
+                <choose>
+                    <when test="groupBy == 'hour'">
+                        LPAD(EXTRACT(HOUR FROM data_time)::text, 2, '0')          AS group_key,
+                        EXTRACT(HOUR FROM data_time)::int::text || '시'           AS group_label
+                    </when>
+                    <when test="groupBy == 'day'">
+                        TO_CHAR(data_time, 'YYYY-MM-DD')                          AS group_key,
+                        TO_CHAR(data_time, 'MM월 DD일')                           AS group_label
+                    </when>
+                    <when test="groupBy == 'month'">
+                        LPAD(EXTRACT(MONTH FROM data_time)::text, 2, '0')         AS group_key,
+                        EXTRACT(MONTH FROM data_time)::int::text || '월'          AS group_label
+                    </when>
+                    <when test="groupBy == 'weekday'">
+                        EXTRACT(DOW FROM data_time)::int::text                    AS group_key,
+                        CASE EXTRACT(DOW FROM data_time)::int
+                            WHEN 0 THEN '일요일'
+                            WHEN 1 THEN '월요일'
+                            WHEN 2 THEN '화요일'
+                            WHEN 3 THEN '수요일'
+                            WHEN 4 THEN '목요일'
+                            WHEN 5 THEN '금요일'
+                            ELSE        '토요일'
+                        END                                                        AS group_label
+                    </when>
+                    <otherwise>
+                        CASE
+                            WHEN EXTRACT(MONTH FROM data_time) IN (3,4,5)   THEN '1'
+                            WHEN EXTRACT(MONTH FROM data_time) IN (6,7,8)   THEN '2'
+                            WHEN EXTRACT(MONTH FROM data_time) IN (9,10,11) THEN '3'
+                            ELSE '4'
+                        END                                                        AS group_key,
+                        CASE
+                            WHEN EXTRACT(MONTH FROM data_time) IN (3,4,5)   THEN '봄'
+                            WHEN EXTRACT(MONTH FROM data_time) IN (6,7,8)   THEN '여름'
+                            WHEN EXTRACT(MONTH FROM data_time) IN (9,10,11) THEN '가을'
+                            ELSE '겨울'
+                        END                                                        AS group_label
+                    </otherwise>
+                </choose>
+            FROM sub_history_air
+            WHERE station_id = #{stationId}
+        ) t
+        GROUP BY group_key, group_label
+        ORDER BY group_key
+    </select>
+
+    <!--
         대기오염 이력 목록 조회
         - EgovMap 키(선택): stationId, startDate, endDate
     -->

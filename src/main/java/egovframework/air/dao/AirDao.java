@@ -26,10 +26,11 @@ public interface AirDao {
     List<String> selectCollectedStationNames(EgovMap param);    // 특정 기간에 이미 데이터가 저장된 측정소명 목록 조회
 
     // //////////////////////////////////////////////
-    // 대기오렴 이력
+    // 대기오염 이력
     // //////////////////////////////////////////////
 
-    List<EgovMap> selectHistoryList(EgovMap searchMap); // 대기오염 이력 목록 조회
+    List<EgovMap> selectHistoryList(EgovMap searchMap);      // 대기오염 이력 목록 조회
+    List<EgovMap> selectHistoryAggregate(EgovMap searchMap); // 대기오염 이력 집계 (시간별/일별/월별/요일별/계절별)
 
     void insertHistory(EgovMap map);    // 대기오염 이력 등록
     int updateHistory(EgovMap map);     // 대기오염 이력 수정

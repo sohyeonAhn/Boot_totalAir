@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 
 @RestController
@@ -68,7 +67,7 @@ public class AirController {
 
 
     // //////////////////////////////////////////////
-    // 대기오렴 이력
+    // 대기오염 이력
     // //////////////////////////////////////////////
 
     // 대기오염 이력 목록 조회 (stationId, startDate, endDate 선택)
@@ -77,6 +76,14 @@ public class AirController {
             @RequestBody(required = false) EgovMap searchMap) {
         if (searchMap == null) searchMap = new EgovMap();
         return ResponseEntity.ok(airService.getHistoryList(searchMap));
+    }
+
+    // 대기오염 이력 집계 (시간별/일별/월별/요일별/계절별 평균)
+    // body: { stationId, groupBy: "hour"|"day"|"month"|"weekday"|"season" }
+    @PostMapping("/api/air/history/aggregate")
+    public ResponseEntity<List<EgovMap>> getHistoryAggregate(
+            @RequestBody EgovMap searchMap) {
+        return ResponseEntity.ok(airService.getHistoryAggregate(searchMap));
     }
 
     // 대기오염 이력 등록

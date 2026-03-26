@@ -45,7 +45,7 @@ public class AirServiceImpl implements AirService {
 
         while (true) {
             // API 호출: 해당 페이지의 측정소 목록 수신
-            List<EgovMap> rows = airKoreaClient.getStations(pageNo, NUM_OF_ROWS);
+            List<EgovMap> rows = airKoreaClient.getStations(pageNo, NUM_OF_ROWS); 
 
             // 수신한 행을 하나씩 DB에 Upsert
             for (EgovMap row : rows) {
@@ -132,7 +132,7 @@ public class AirServiceImpl implements AirService {
 
 
     // //////////////////////////////////////////////
-    // 대기오렴 이력
+    // 대기오염 이력
     // //////////////////////////////////////////////
 
     // 대기오염 이력 목록 조회
@@ -208,6 +208,11 @@ public class AirServiceImpl implements AirService {
 
         log.info("[AirService] 측정정보 이력 수집 완료 startDate={}, endDate={}, total={}", startDate, endDate, total);
         return total;
+    }
+
+    @Override
+    public List<EgovMap> getHistoryAggregate(EgovMap searchMap) {
+        return airDao.selectHistoryAggregate(searchMap);
     }
 
 

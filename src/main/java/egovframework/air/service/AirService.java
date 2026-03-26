@@ -17,7 +17,8 @@ public interface AirService {
     void updateStation(EgovMap map);    // 측정소 수정
     void deleteStation(EgovMap map);    // 측정소 삭제
 
-    List<EgovMap> getHistoryList(EgovMap searchMap);    // 대기오염 이력 목록 조회
+    List<EgovMap> getHistoryList(EgovMap searchMap);          // 대기오염 이력 목록 조회
+    List<EgovMap> getHistoryAggregate(EgovMap searchMap);     // 대기오염 이력 집계 (시간별/일별/월별/요일별/계절별)
 
     void insertHistory(EgovMap map);    // 대기오염 이력 등록
     void updateHistory(EgovMap map);    // 대기오염 이력 수정
