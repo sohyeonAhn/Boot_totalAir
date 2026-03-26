@@ -4,6 +4,7 @@ import egovframework.air.dao.AirDao;
 import egovframework.air.service.AirService;
 import egovframework.client.AirKoreaClient;
 import egovframework.client.VWorldClient;
+import egovframework.util.CityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egovframe.rte.psl.dataaccess.util.EgovMap;
@@ -48,6 +49,8 @@ public class AirServiceImpl implements AirService {
 
             // 수신한 행을 하나씩 DB에 Upsert
             for (EgovMap row : rows) {
+                // API 응답의 addr로 city 자동 설정
+                row.put("city", CityUtils.extractCity((String) row.get("addr")));
                 airDao.upsertStation(row);
                 total++;
             }
@@ -90,14 +93,18 @@ public class AirServiceImpl implements AirService {
     }
 
     // 입력한 주소를 VWorld 검색 API로 조회
-    // 도로명주소와 좌표를 map에 자동 보정
+    // 도로명주소와 좌표를 map에 자동 보정, 이후 city 자동 설정
     private void resolveAddrCoords(EgovMap map) {
         String addr = (String) map.get("addr");
         if (!StringUtils.hasText(addr)) return;  // addr 없으면 보정 불필요
 
         // 가장 일치도 높은 결과 1건만 요청 (page=1, size=1)
         List<EgovMap> results = vWorldClient.searchAddress(addr, 1, 1);
-        if (results.isEmpty()) return;  // 검색 결과 없으면 원본 유지
+        if (results.isEmpty()) {
+            // VWorld 검색 결과가 없어도 원본 addr로 city 추출
+            map.put("city", CityUtils.extractCity(addr));
+            return;
+        }
 
         EgovMap hit = results.get(0);
         String road = (String) hit.get("road");  // 도로명주소
@@ -107,7 +114,12 @@ public class AirServiceImpl implements AirService {
         if (StringUtils.hasText(road)) map.put("addr", road);  // 도로명주소로 정규화
         if (StringUtils.hasText(x))    map.put("dmX",  x);     // 경도 자동 채움
         if (StringUtils.hasText(y))    map.put("dmY",  y);     // 위도 자동 채움
+
+        // 정규화된 주소(도로명주소 우선, 없으면 원본)로 city 추출
+        String resolvedAddr = StringUtils.hasText(road) ? road : addr;
+        map.put("city", CityUtils.extractCity(resolvedAddr));
     }
+
 
     // 측정소 삭제
     @Override

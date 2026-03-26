@@ -9,11 +9,11 @@
 
     <!--
         측정소 Upsert
-        - EgovMap 키: stationName, addr, year, mangName, item, dmX, dmY
+        - EgovMap 키: stationName, addr, year, mangName, item, dmX, dmY, city
     -->
     <insert id="upsertStation" parameterType="map">
-        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y)
-        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}, #{dmY})
+        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y, city)
+        VALUES (#{stationName}, #{addr}, #{year}, #{mangName}, #{item}, #{dmX}, #{dmY}, #{city})
         ON CONFLICT (station_name) DO UPDATE SET
             addr         = EXCLUDED.addr,
             install_year = EXCLUDED.install_year,
@@ -21,6 +21,7 @@
             item         = EXCLUDED.item,
             dm_x         = EXCLUDED.dm_x,
             dm_y         = EXCLUDED.dm_y,
+            city         = EXCLUDED.city,
             updated_at   = CURRENT_TIMESTAMP
     </insert>
 
@@ -28,8 +29,8 @@
         측정소 등록
     -->
     <insert id="insertStation" parameterType="map">
-        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y)
-        VALUES (#{stationName}, #{addr}, NULLIF(#{year}, '')::integer, #{mangName}, #{item}, NULLIF(#{dmX}, '')::numeric, NULLIF(#{dmY}, '')::numeric)
+        INSERT INTO sub_station_air (station_name, addr, install_year, mang_name, item, dm_x, dm_y, city)
+        VALUES (#{stationName}, #{addr}, NULLIF(#{year}, '')::integer, #{mangName}, #{item}, NULLIF(#{dmX}, '')::numeric, NULLIF(#{dmY}, '')::numeric, #{city})
     </insert>
 
     <!--
@@ -44,6 +45,7 @@
             item         = #{item},
             dm_x         = NULLIF(#{dmX}, '')::numeric,
             dm_y         = NULLIF(#{dmY}, '')::numeric,
+            city         = #{city},
             updated_at   = CURRENT_TIMESTAMP
         WHERE station_id = #{stationId}::bigint
     </update>
@@ -61,12 +63,15 @@
         측정소 목록 조회
     -->
     <select id="selectStationList" parameterType="map" resultType="egovMap">
-        SELECT station_id, station_name, addr,
+        SELECT station_id, station_name, addr, city,
                install_year AS year,
                mang_name, item, dm_x, dm_y, tm,
                created_at, updated_at
         FROM sub_station_air
         <where>
+            <if test="city != null and city != ''">
+                AND city = #{city}
+            </if>
             <if test="keyword != null and keyword != ''">
                 AND (
                     station_name LIKE '%' || #{keyword} || '%'
@@ -75,7 +80,7 @@
                 )
             </if>
         </where>
-        ORDER BY station_id
+        ORDER BY city, station_id
     </select>
 
 
