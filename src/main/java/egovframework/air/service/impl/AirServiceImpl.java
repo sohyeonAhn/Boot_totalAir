@@ -3,12 +3,15 @@ package egovframework.air.service.impl;
 import egovframework.air.dao.AirDao;
 import egovframework.air.service.AirService;
 import egovframework.client.AirKoreaClient;
+import egovframework.client.VWorldClient;
+import egovframework.util.CityUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egovframe.rte.psl.dataaccess.util.EgovMap;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,7 +30,8 @@ import java.util.Set;
 public class AirServiceImpl implements AirService {
 
     private final AirKoreaClient airKoreaClient;
-    private final AirDao airDao;
+    private final VWorldClient   vWorldClient;
+    private final AirDao         airDao;
 
     // AirKorea API 1회 호출 시 가져올 최대 행 수
     private static final int NUM_OF_ROWS = 100;
@@ -45,6 +49,8 @@ public class AirServiceImpl implements AirService {
 
             // 수신한 행을 하나씩 DB에 Upsert
             for (EgovMap row : rows) {
+                // API 응답의 addr로 city 자동 설정
+                row.put("city", CityUtils.extractCity((String) row.get("addr")));
                 airDao.upsertStation(row);
                 total++;
             }
@@ -69,20 +75,51 @@ public class AirServiceImpl implements AirService {
         return airDao.selectStationList(searchMap);
     }
 
-    // 측정소 등록
+    // 측정소 등록 (addr 입력 시 VWorld로 도로명주소·좌표 자동 보정)
     @Override
     public void insertStation(EgovMap map) {
+        resolveAddrCoords(map);
         airDao.insertStation(map);
     }
 
-    // 측정소 수정
+    // 측정소 수정 (addr 입력 시 VWorld로 도로명주소·좌표 자동 보정)
     @Override
     public void updateStation(EgovMap map) {
+        resolveAddrCoords(map);
         int affected = airDao.updateStation(map);
         if (affected == 0) {
             throw new IllegalArgumentException("수정할 측정소가 없습니다. stationId=" + map.get("stationId"));
         }
     }
+
+    // 입력한 주소를 VWorld 검색 API로 조회
+    // 도로명주소와 좌표를 map에 자동 보정, 이후 city 자동 설정
+    private void resolveAddrCoords(EgovMap map) {
+        String addr = (String) map.get("addr");
+        if (!StringUtils.hasText(addr)) return;  // addr 없으면 보정 불필요
+
+        // 가장 일치도 높은 결과 1건만 요청 (page=1, size=1)
+        List<EgovMap> results = vWorldClient.searchAddress(addr, 1, 1);
+        if (results.isEmpty()) {
+            // VWorld 검색 결과가 없어도 원본 addr로 city 추출
+            map.put("city", CityUtils.extractCity(addr));
+            return;
+        }
+
+        EgovMap hit = results.get(0);
+        String road = (String) hit.get("road");  // 도로명주소
+        String x    = (String) hit.get("x");     // 경도
+        String y    = (String) hit.get("y");     // 위도
+
+        if (StringUtils.hasText(road)) map.put("addr", road);  // 도로명주소로 정규화
+        if (StringUtils.hasText(x))    map.put("dmX",  x);     // 경도 자동 채움
+        if (StringUtils.hasText(y))    map.put("dmY",  y);     // 위도 자동 채움
+
+        // 정규화된 주소(도로명주소 우선, 없으면 원본)로 city 추출
+        String resolvedAddr = StringUtils.hasText(road) ? road : addr;
+        map.put("city", CityUtils.extractCity(resolvedAddr));
+    }
+
 
     // 측정소 삭제
     @Override
